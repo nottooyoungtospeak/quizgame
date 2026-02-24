@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Speak Up! — Youth Quiz Game</title>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #5BAED6;
+      --blue2: #7EC8E3;
+      --blue3: #C8E8F5;
+      --blue4: #EFF8FD;
+      --pink: #E87EA1;
+      --pink2: #F5A8C0;
+      --pink3: #FCE4EE;
+      --yellow: #F9D77E;
+      --peach: #FBBF8C;
+      --green: #7BC8A4;
+      --green2: #D4F5E9;
+      --lavender: #C3A8D1;
+      --text: #3A3560;
+      --textmid: #6B6490;
+      --textlight: #9B97BA;
+      --white: #FFFFFF;
+      --offwhite: #F8F4FF;
+    }
+
+    html, body {
+      min-height: 100vh;
+      font-family: 'Nunito', sans-serif;
+      background: linear-gradient(160deg, #EFF8FD 0%, #FFF0F6 50%, #FFF8E8 100%);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    /* BG DECORATION */
+    body::before {
+      content: '';
+      position: fixed; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 600px 400px at 5% 15%, rgba(91,174,214,0.14) 0%, transparent 70%),
+        radial-gradient(ellipse 500px 300px at 95% 10%, rgba(232,126,161,0.13) 0%, transparent 70%),
+        radial-gradient(ellipse 400px 300px at 50% 95%, rgba(249,215,126,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .game-wrap {
+      position: relative; z-index: 1;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    /* ── FLOATING PARTICLES ── */
+    .particles { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+    .particle {
+      position: absolute; border-radius: 50%;
+      animation: particleDrift linear infinite;
+      opacity: 0.5;
+    }
+    @keyframes particleDrift {
+      0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+      10% { opacity: 0.6; }
+      90% { opacity: 0.4; }
+      100% { transform: translateY(-100px) rotate(360deg); opacity: 0; }
+    }
+
+    /* ── SCREEN BASE ── */
+    .screen {
+      display: none; width: 100%; max-width: 720px;
+      animation: screenIn 0.5s ease forwards;
+    }
+    .screen.active { display: block; }
+    @keyframes screenIn {
+      from { opacity: 0; transform: translateY(20px) scale(0.97); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* ── CARD ── */
+    .card {
+      background: rgba(255,255,255,0.92);
+      border-radius: 32px;
+      padding: 3rem 3rem;
+      box-shadow: 0 20px 60px rgba(91,174,214,0.18), 0 4px 16px rgba(232,126,161,0.1);
+      border: 2px solid rgba(91,174,214,0.15);
+      backdrop-filter: blur(12px);
+      position: relative; overflow: hidden;
+    }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0; height: 6px;
+      background: linear-gradient(to right, var(--blue), var(--pink), var(--yellow));
+    }
+
+    /* ══════════ SCREEN 1: START ══════════ */
+    #start-screen { text-align: center; }
+
+    .game-logo-wrap {
+      margin-bottom: 1.5rem;
+    }
+    .game-logo-img {
+      width: 160px; height: auto;
+      filter: drop-shadow(0 8px 24px rgba(91,174,214,0.3));
+      animation: logoFloat 3s ease-in-out infinite;
+    }
+    @keyframes logoFloat {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    .game-title {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(2.5rem, 7vw, 4rem); font-weight: 700;
+      background: linear-gradient(135deg, var(--blue), var(--pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      line-height: 1.1; margin-bottom: 0.4rem;
+    }
+    .game-subtitle {
+      font-size: 1rem; font-weight: 700; color: var(--textmid);
+      letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 0.5rem;
+    }
+    .game-tagline {
+      font-family: 'Dancing Script', cursive;
+      font-size: 1.4rem; color: var(--blue); margin-bottom: 2rem;
+    }
+    .game-desc {
+      font-size: 0.95rem; line-height: 1.8; color: var(--textmid);
+      max-width: 500px; margin: 0 auto 2.5rem;
+    }
+
+    /* DIFFICULTY SELECT */
+    .difficulty-row {
+      display: flex; gap: 1rem; justify-content: center; margin-bottom: 2rem; flex-wrap: wrap;
+    }
+    .diff-btn {
+      padding: 0.6rem 1.5rem; border-radius: 50px; border: 2.5px solid transparent;
+      font-family: 'Nunito', sans-serif; font-size: 0.85rem; font-weight: 800;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .diff-btn.easy { background: var(--green2); color: var(--green); border-color: var(--green); }
+    .diff-btn.medium { background: var(--blue3); color: var(--blue); border-color: var(--blue); }
+    .diff-btn.hard { background: var(--pink3); color: var(--pink); border-color: var(--pink); }
+    .diff-btn.selected { transform: scale(1.08); box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
+    .diff-btn:hover { transform: scale(1.05); }
+
+    .start-stats {
+      display: flex; gap: 2rem; justify-content: center; margin-bottom: 2.5rem; flex-wrap: wrap;
+    }
+    .stat-pill {
+      background: var(--offwhite); border-radius: 50px;
+      padding: 0.6rem 1.4rem;
+      font-size: 0.82rem; font-weight: 700; color: var(--textmid);
+      display: flex; align-items: center; gap: 0.4rem;
+      border: 1.5px solid rgba(91,174,214,0.2);
+    }
+    .stat-pill span { font-size: 1rem; }
+
+    /* ══════════ BUTTONS ══════════ */
+    .btn {
+      display: inline-block; padding: 1rem 2.5rem; border-radius: 50px;
+      font-family: 'Nunito', sans-serif; font-size: 1rem; font-weight: 800;
+      letter-spacing: 0.05em; border: none; cursor: pointer; text-decoration: none;
+      transition: all 0.25s;
+    }
+    .btn-blue {
+      background: linear-gradient(135deg, var(--blue), var(--blue2));
+      color: #fff; box-shadow: 0 6px 20px rgba(91,174,214,0.45);
+    }
+    .btn-blue:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(91,174,214,0.5); }
+    .btn-pink {
+      background: linear-gradient(135deg, var(--pink), var(--pink2));
+      color: #fff; box-shadow: 0 6px 20px rgba(232,126,161,0.45);
+    }
+    .btn-pink:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(232,126,161,0.5); }
+    .btn-outline {
+      background: transparent; color: var(--blue);
+      border: 2.5px solid var(--blue);
+    }
+    .btn-outline:hover { background: var(--blue3); }
+    .btn-yellow {
+      background: linear-gradient(135deg, var(--yellow), var(--peach));
+      color: var(--text); box-shadow: 0 6px 20px rgba(249,215,126,0.5);
+    }
+    .btn-yellow:hover { transform: translateY(-3px); }
+    .btn-sm { padding: 0.6rem 1.5rem; font-size: 0.85rem; }
+
+    /* ══════════ SCREEN 2: QUIZ ══════════ */
+    #quiz-screen .card { padding: 2.5rem; }
+
+    /* TOP BAR */
+    .quiz-topbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;
+    }
+    .quiz-progress-wrap { flex: 1; }
+    .quiz-qnum {
+      font-size: 0.75rem; font-weight: 700; color: var(--textlight);
+      letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 0.4rem;
+    }
+    .progress-bar-bg {
+      height: 10px; background: var(--offwhite); border-radius: 50px;
+      overflow: hidden; border: 1.5px solid rgba(91,174,214,0.15);
+    }
+    .progress-bar-fill {
+      height: 100%; border-radius: 50px;
+      background: linear-gradient(to right, var(--blue), var(--pink));
+      transition: width 0.5s ease;
+    }
+
+    .score-badge {
+      background: linear-gradient(135deg, var(--yellow), var(--peach));
+      border-radius: 50px; padding: 0.5rem 1.2rem;
+      font-size: 0.9rem; font-weight: 800; color: var(--text);
+      box-shadow: 0 3px 10px rgba(249,215,126,0.4);
+      white-space: nowrap;
+    }
+
+    /* TIMER */
+    .timer-wrap {
+      display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+    }
+    .timer-circle {
+      width: 56px; height: 56px; border-radius: 50%;
+      background: conic-gradient(var(--blue) 0deg, var(--offwhite) 0deg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; font-weight: 900; color: var(--text);
+      position: relative; transition: background 0.1s;
+      box-shadow: 0 4px 12px rgba(91,174,214,0.2);
+    }
+    .timer-circle::before {
+      content: ''; position: absolute; inset: 5px; border-radius: 50%;
+      background: white;
+    }
+    .timer-num { position: relative; z-index: 1; }
+    .timer-label { font-size: 0.6rem; font-weight: 700; color: var(--textlight); text-transform: uppercase; letter-spacing: 0.1em; }
+
+    /* CATEGORY TAG */
+    .q-category {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: var(--blue3); border-radius: 50px;
+      padding: 0.35rem 1rem; margin-bottom: 1rem;
+      font-size: 0.72rem; font-weight: 700; color: var(--blue);
+      letter-spacing: 0.1em; text-transform: uppercase;
+    }
+
+    /* QUESTION */
+    .q-text {
+      font-size: clamp(1rem, 2.5vw, 1.25rem); font-weight: 800;
+      line-height: 1.5; color: var(--text); margin-bottom: 2rem;
+    }
+
+    /* ANSWER OPTIONS */
+    .options-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1rem; margin-bottom: 1.5rem;
+    }
+    .option-btn {
+      padding: 1.1rem 1.2rem; border-radius: 18px;
+      border: 2.5px solid rgba(91,174,214,0.2);
+      background: var(--offwhite);
+      font-family: 'Nunito', sans-serif; font-size: 0.9rem; font-weight: 700;
+      color: var(--text); cursor: pointer; text-align: left;
+      transition: all 0.2s; line-height: 1.4;
+      display: flex; align-items: flex-start; gap: 0.8rem;
+    }
+    .option-btn:hover:not(:disabled) {
+      border-color: var(--blue); background: var(--blue3);
+      transform: translateY(-2px); box-shadow: 0 6px 16px rgba(91,174,214,0.2);
+    }
+    .option-letter {
+      width: 28px; height: 28px; min-width: 28px; border-radius: 50%;
+      background: rgba(91,174,214,0.15); color: var(--blue);
+      font-size: 0.78rem; font-weight: 900;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .option-btn.correct {
+      border-color: var(--green); background: var(--green2);
+      animation: correctPop 0.4s ease;
+    }
+    .option-btn.correct .option-letter { background: var(--green); color: #fff; }
+    .option-btn.wrong {
+      border-color: var(--pink); background: var(--pink3);
+      animation: wrongShake 0.4s ease;
+    }
+    .option-btn.wrong .option-letter { background: var(--pink); color: #fff; }
+    .option-btn.reveal-correct {
+      border-color: var(--green); background: var(--green2);
+    }
+    .option-btn.reveal-correct .option-letter { background: var(--green); color: #fff; }
+    .option-btn:disabled { cursor: default; }
+
+    @keyframes correctPop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.04); }
+      100% { transform: scale(1); }
+    }
+    @keyframes wrongShake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-6px); }
+      75% { transform: translateX(6px); }
+    }
+
+    /* FEEDBACK */
+    .feedback-box {
+      padding: 1.2rem 1.5rem; border-radius: 16px;
+      margin-bottom: 1.2rem; display: none;
+      font-size: 0.9rem; font-weight: 700; line-height: 1.6;
+      animation: fadeSlide 0.3s ease;
+    }
+    .feedback-box.correct-fb { background: var(--green2); color: #2a7a5a; border: 1.5px solid var(--green); }
+    .feedback-box.wrong-fb { background: var(--pink3); color: #9a2a4a; border: 1.5px solid var(--pink2); }
+    .feedback-box.active { display: block; }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .next-row { text-align: right; }
+
+    /* STREAK BADGE */
+    .streak-badge {
+      display: none; position: fixed; top: 2rem; right: 2rem; z-index: 100;
+      background: linear-gradient(135deg, var(--yellow), var(--peach));
+      border-radius: 20px; padding: 1rem 1.5rem; text-align: center;
+      box-shadow: 0 8px 30px rgba(249,215,126,0.5);
+      animation: streakPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .streak-badge.show { display: block; }
+    .streak-fire { font-size: 2rem; }
+    .streak-text { font-size: 0.75rem; font-weight: 800; color: var(--text); text-transform: uppercase; letter-spacing: 0.1em; }
+    @keyframes streakPop {
+      from { opacity: 0; transform: scale(0.5) translateY(20px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    /* ══════════ SCREEN 3: RESULTS ══════════ */
+    #result-screen { text-align: center; }
+
+    .result-trophy {
+      font-size: 5rem; margin-bottom: 1rem;
+      animation: trophyBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s both;
+    }
+    @keyframes trophyBounce {
+      from { transform: scale(0) rotate(-20deg); opacity: 0; }
+      to { transform: scale(1) rotate(0deg); opacity: 1; }
+    }
+
+    .result-title {
+      font-family: 'Dancing Script', cursive;
+      font-size: clamp(2rem, 6vw, 3.5rem); font-weight: 700;
+      background: linear-gradient(135deg, var(--blue), var(--pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .result-msg { font-size: 1rem; color: var(--textmid); font-weight: 600; margin-bottom: 2rem; }
+
+    .score-ring-wrap { display: flex; justify-content: center; margin-bottom: 2rem; }
+    .score-ring {
+      width: 160px; height: 160px; border-radius: 50%;
+      background: conic-gradient(var(--blue) 0deg, var(--offwhite) 0deg);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 8px 30px rgba(91,174,214,0.25);
+      position: relative;
+    }
+    .score-ring::before {
+      content: ''; position: absolute; inset: 14px; border-radius: 50%; background: white;
+    }
+    .score-ring-inner { position: relative; z-index: 1; text-align: center; }
+    .score-big {
+      font-family: 'Dancing Script', cursive;
+      font-size: 3rem; font-weight: 700; line-height: 1;
+      background: linear-gradient(135deg, var(--blue), var(--pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .score-total { font-size: 0.75rem; font-weight: 700; color: var(--textlight); }
+
+    .result-stats {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;
+    }
+    .r-stat {
+      background: var(--offwhite); border-radius: 18px; padding: 1.2rem;
+      border: 1.5px solid rgba(91,174,214,0.12);
+    }
+    .r-stat-num {
+      font-family: 'Dancing Script', cursive; font-size: 2rem;
+      background: linear-gradient(135deg, var(--blue), var(--pink));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .r-stat-label { font-size: 0.75rem; font-weight: 700; color: var(--textlight); text-transform: uppercase; letter-spacing: 0.08em; }
+
+    .result-quote {
+      background: linear-gradient(160deg, var(--blue3), var(--pink3));
+      border-radius: 20px; padding: 2rem; margin-bottom: 2rem; text-align: left;
+    }
+    .result-quote-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .result-quote-text { font-family: 'Dancing Script', cursive; font-size: 1.4rem; color: var(--text); line-height: 1.4; margin-bottom: 0.5rem; }
+    .result-quote-attr { font-size: 0.75rem; font-weight: 700; color: var(--textmid); text-transform: uppercase; letter-spacing: 0.12em; }
+
+    .result-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* CONFETTI */
+    .confetti-piece {
+      position: fixed; top: -10px; z-index: 200;
+      width: 10px; height: 10px; border-radius: 2px;
+      animation: confettiFall linear forwards;
+      pointer-events: none;
+    }
+    @keyframes confettiFall {
+      0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+      100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+
+    /* REVIEW MODAL */
+    .modal-bg {
+      display: none; position: fixed; inset: 0; z-index: 500;
+      background: rgba(58,53,96,0.4); backdrop-filter: blur(6px);
+      align-items: center; justify-content: center; padding: 1rem;
+    }
+    .modal-bg.open { display: flex; }
+    .modal {
+      background: white; border-radius: 28px; padding: 2.5rem;
+      max-width: 600px; width: 100%; max-height: 80vh; overflow-y: auto;
+      box-shadow: 0 24px 60px rgba(58,53,96,0.25);
+      position: relative;
+    }
+    .modal-close {
+      position: absolute; top: 1.2rem; right: 1.5rem;
+      background: var(--pink3); border: none; border-radius: 50%;
+      width: 36px; height: 36px; cursor: pointer; font-size: 1rem;
+      color: var(--pink); font-weight: 900; display: flex; align-items: center; justify-content: center;
+      transition: background 0.2s;
+    }
+    .modal-close:hover { background: var(--pink2); color: white; }
+    .modal h2 {
+      font-family: 'Dancing Script', cursive; font-size: 2rem; color: var(--text); margin-bottom: 1.5rem;
+    }
+    .review-item { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1.5px solid var(--offwhite); }
+    .review-item:last-child { border-bottom: none; margin-bottom: 0; }
+    .review-q { font-size: 0.9rem; font-weight: 700; color: var(--text); margin-bottom: 0.5rem; }
+    .review-your { font-size: 0.82rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .review-your.ok { color: var(--green); }
+    .review-your.bad { color: var(--pink); }
+    .review-correct { font-size: 0.82rem; font-weight: 700; color: var(--blue); }
+    .review-explain { font-size: 0.8rem; color: var(--textmid); margin-top: 0.4rem; line-height: 1.6; }
+
+    /* ══════════ RESPONSIVE ══════════ */
+    @media (max-width: 600px) {
+      .card { padding: 2rem 1.5rem; }
+      .options-grid { grid-template-columns: 1fr; }
+      .result-stats { grid-template-columns: 1fr 1fr; }
+      .quiz-topbar { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="particles" id="particles"></div>
+
+<div class="game-wrap">
+
+  <!-- ══ SCREEN 1: START ══ -->
+  <div class="screen active" id="start-screen">
+    <div class="card">
+      <div class="game-logo-wrap">
+        <img src="logo.png" alt="Not Too Young To Speak" class="game-logo-img" onerror="this.style.display='none'"/>
+      </div>
+      <div class="game-title">Speak Up! 📣</div>
+      <div class="game-subtitle">Youth Advocacy Quiz</div>
+      <div class="game-tagline">✦ Raise Your Voice. Be Heard. ✦</div>
+      <p class="game-desc">Test your knowledge on youth rights, ageism, civic participation, and the power of speaking up! Every correct answer is a step toward a world where youth voices are heard. 🌸</p>
+
+      <p style="font-size:0.8rem;font-weight:700;color:var(--textlight);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:0.8rem;">Choose Difficulty</p>
+      <div class="difficulty-row">
+        <button class="diff-btn easy selected" onclick="setDiff(this,'easy')">🌱 Easy</button>
+        <button class="diff-btn medium" onclick="setDiff(this,'medium')">🌟 Medium</button>
+        <button class="diff-btn hard" onclick="setDiff(this,'hard')">🔥 Hard</button>
+      </div>
+
+      <div class="start-stats">
+        <div class="stat-pill"><span>❓</span> <span id="q-count-label">10 Questions</span></div>
+        <div class="stat-pill"><span>⏱️</span> <span id="time-label">20 sec/question</span></div>
+        <div class="stat-pill"><span>⭐</span> Earn Stars</div>
+      </div>
+
+      <button class="btn btn-blue" onclick="startGame()" style="width:100%;font-size:1.1rem;">
+        Let's Play! ✦
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 2: QUIZ ══ -->
+  <div class="screen" id="quiz-screen">
+    <div class="card">
+      <div class="quiz-topbar">
+        <div class="quiz-progress-wrap">
+          <div class="quiz-qnum" id="q-num-label">Question 1 of 10</div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" id="progress-fill" style="width:10%"></div>
+          </div>
+        </div>
+        <div class="timer-wrap">
+          <div class="timer-circle" id="timer-circle">
+            <span class="timer-num" id="timer-num">20</span>
+          </div>
+          <div class="timer-label">secs</div>
+        </div>
+        <div class="score-badge">⭐ <span id="score-display">0</span></div>
+      </div>
+
+      <div class="q-category" id="q-category">📚 Category</div>
+      <div class="q-text" id="q-text">Loading question...</div>
+
+      <div class="options-grid" id="options-grid"></div>
+
+      <div class="feedback-box" id="feedback-box"></div>
+
+      <div class="next-row">
+        <button class="btn btn-blue btn-sm" id="next-btn" onclick="nextQuestion()" style="display:none;">
+          Next Question →
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCREEN 3: RESULTS ══ -->
+  <div class="screen" id="result-screen">
+    <div class="card">
+      <div class="result-trophy" id="result-trophy">🏆</div>
+      <div class="result-title" id="result-title">Amazing!</div>
+      <div class="result-msg" id="result-msg">You truly are Not Too Young To Speak!</div>
+
+      <div class="score-ring-wrap">
+        <div class="score-ring" id="score-ring">
+          <div class="score-ring-inner">
+            <div class="score-big" id="final-score-big">0</div>
+            <div class="score-total" id="final-score-total">pts</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="result-stats">
+        <div class="r-stat">
+          <div class="r-stat-num" id="r-correct">0</div>
+          <div class="r-stat-label">✅ Correct</div>
+        </div>
+        <div class="r-stat">
+          <div class="r-stat-num" id="r-wrong">0</div>
+          <div class="r-stat-label">❌ Wrong</div>
+        </div>
+        <div class="r-stat">
+          <div class="r-stat-num" id="r-streak">0</div>
+          <div class="r-stat-label">🔥 Best Streak</div>
+        </div>
+      </div>
+
+      <div class="result-quote" id="result-quote">
+        <div class="result-quote-icon">💬</div>
+        <div class="result-quote-text" id="result-quote-text">"Your voice matters."</div>
+        <div class="result-quote-attr">Not Too Young To Speak</div>
+      </div>
+
+      <div class="result-actions">
+        <button class="btn btn-blue" onclick="restartGame()">Play Again 🔄</button>
+        <button class="btn btn-outline" onclick="openReview()">Review Answers 📋</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /game-wrap -->
+
+<!-- STREAK BADGE -->
+<div class="streak-badge" id="streak-badge">
+  <div class="streak-fire" id="streak-fire">🔥</div>
+  <div class="streak-text" id="streak-text">3x Streak!</div>
+</div>
+
+<!-- REVIEW MODAL -->
+<div class="modal-bg" id="modal-bg">
+  <div class="modal">
+    <button class="modal-close" onclick="closeReview()">✕</button>
+    <h2>📋 Answer Review</h2>
+    <div id="review-content"></div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════
+// QUESTION BANK
+// ══════════════════════════════════════
+const allQuestions = [
+  // EASY
+  {
+    diff: 'easy',
+    category: '📢 Youth Rights',
+    q: 'What does "ageism" mean in the context of youth advocacy?',
+    opts: ['Respecting elders', 'Discriminating based on age', 'Voting rights for seniors', 'School age requirements'],
+    ans: 1,
+    exp: 'Ageism is discrimination based on age. For youth, this means having their ideas dismissed just because they are young.'
+  },
+  {
+    diff: 'easy',
+    category: '🎤 Speaking Up',
+    q: 'According to "Not Too Young To Speak," speaking up about societal issues is an act of...',
+    opts: ['Rebellion', 'Civic duty', 'Disrespect', 'Immaturity'],
+    ans: 1,
+    exp: 'Advocating for change is an act of civic duty — it shows you care about your community and take responsibility seriously.'
+  },
+  {
+    diff: 'easy',
+    category: '📚 Knowledge',
+    q: 'What is the tagline of the "Not Too Young To Speak" advocacy?',
+    opts: ['Youth First!', 'Raise Your Voice. Be Heard.', 'Speak Now or Never', 'Change Starts With You'],
+    ans: 1,
+    exp: '"Raise Your Voice. Be Heard." captures the mission of empowering youth to participate in civic discussions.'
+  },
+  {
+    diff: 'easy',
+    category: '🌍 Advocacy',
+    q: 'Where is the "Not Too Young To Speak" advocacy based?',
+    opts: ['Manila', 'Davao', 'Cebu', 'Iloilo'],
+    ans: 2,
+    exp: 'The advocacy is based in Cebu, Philippines, serving youth voices across the entire country.'
+  },
+  {
+    diff: 'easy',
+    category: '📱 Platform',
+    q: 'Which platform serves as the "Pulse Center" for the advocacy?',
+    opts: ['Twitter/X', 'Instagram', 'TikTok', 'Facebook Page'],
+    ans: 3,
+    exp: 'The Facebook Page serves as the "Pulse Center" — hosting real-time polls, Youth Takes, and quote graphics.'
+  },
+  {
+    diff: 'easy',
+    category: '💬 Dialogue',
+    q: 'What dismissive phrase do youth advocates often hear when speaking up?',
+    opts: ['"That\'s a great point!"', '"We need your help!"', '"You\'ll understand when you\'re older."', '"Please share more."'],
+    ans: 2,
+    exp: '"You\'ll understand when you\'re older" is a common dismissal that silences young voices. The advocacy challenges this mindset.'
+  },
+  {
+    diff: 'easy',
+    category: '🌸 Values',
+    q: 'Which of these is a core value of Not Too Young To Speak?',
+    opts: ['Confrontation', 'Silence', 'Inclusion', 'Isolation'],
+    ans: 2,
+    exp: 'Inclusion is a core value — every young voice deserves to be heard regardless of background or economic status.'
+  },
+  {
+    diff: 'easy',
+    category: '📖 Reference',
+    q: 'Who wrote "Anti-Ageism: Breaking the Barriers of Youth Silencing"?',
+    opts: ['Jose Rizal', 'J.M.G. Padigos', 'Andres Bonifacio', 'Apolinario Mabini'],
+    ans: 1,
+    exp: 'Padigos (2022) wrote this article sharing personal experiences of being dismissed despite leading successful projects.'
+  },
+  {
+    diff: 'easy',
+    category: '🏛️ Civics',
+    q: 'Young people are described as stakeholders of...',
+    opts: ['The future only', 'The past', 'Today AND the future', 'Only their school'],
+    ans: 2,
+    exp: 'Youth are active stakeholders of today who will inherit the long-term consequences of current decisions — not just future leaders.'
+  },
+  {
+    diff: 'easy',
+    category: '💡 Mission',
+    q: 'What is the Vision of Not Too Young To Speak?',
+    opts: ['More schools in Cebu', 'A society where youths speak freely without judgment', 'Lower voting age to 10', 'Youth-only government'],
+    ans: 1,
+    exp: 'The Vision is to see a society where youths are free to speak without being judged or discriminated against.'
+  },
+  // MEDIUM
+  {
+    diff: 'medium',
+    category: '🧠 Critical Thinking',
+    q: 'A student presents a climate policy idea at a town hall but is told "You\'re too young to understand politics." This is an example of...',
+    opts: ['Good mentoring', 'Youth ageism', 'Civic education', 'Policy debate'],
+    ans: 1,
+    exp: 'This is youth ageism — dismissing an idea purely based on the speaker\'s age rather than the merit of the idea itself.'
+  },
+  {
+    diff: 'medium',
+    category: '📊 Platform',
+    q: 'What type of content does the Official Website (Intellectual Hub) primarily host?',
+    opts: ['Memes and videos', 'Long-form essays and advocacy explainers', 'Gaming content', 'Shopping deals'],
+    ans: 1,
+    exp: 'The website features long-form essays, youth-written articles, and advocacy explainers backed by data and research.'
+  },
+  {
+    diff: 'medium',
+    category: '🌍 Social Issues',
+    q: 'Why is it important for youth to speak up about climate change NOW?',
+    opts: ['It helps them pass science class', 'They will directly inherit the long-term consequences of today\'s decisions', 'Adults don\'t care about it', 'It makes them popular online'],
+    ans: 1,
+    exp: 'Youth will directly inherit the consequences of today\'s climate decisions, making their voices in this conversation essential and urgent.'
+  },
+  {
+    diff: 'medium',
+    category: '💬 Rhetoric',
+    q: 'Replacing the "rebellion" narrative with the "responsibility" framework means...',
+    opts: ['Being quiet and obedient', 'Seeing civic engagement as duty, not defiance', 'Following only adult guidance', 'Avoiding all political topics'],
+    ans: 1,
+    exp: 'When youth advocacy is framed as civic responsibility rather than rebellion, it changes how society receives and values youth input.'
+  },
+  {
+    diff: 'medium',
+    category: '🤝 Community',
+    q: 'What is the dual-platform approach of Not Too Young To Speak designed to do?',
+    opts: ['Sell merchandise', 'Bridge generational gaps and provide evidence-based space for youth discourse', 'Replace traditional media', 'Create a political party'],
+    ans: 1,
+    exp: 'The dual-platform approach bridges generational perspectives through Facebook (real-time dialogue) and the website (in-depth analysis).'
+  },
+  {
+    diff: 'medium',
+    category: '🔬 Research',
+    q: 'What did Padigos (2022) argue in the anti-ageism article?',
+    opts: ['Youth should wait their turn', 'Young people can lead and create change when given the chance', 'Adults are always right', 'Social media is harmful for youth'],
+    ans: 1,
+    exp: 'Padigos argued that ageism is a myth — young people have proven they can successfully lead projects and create meaningful community change.'
+  },
+  {
+    diff: 'medium',
+    category: '⚖️ Justice',
+    q: 'What does social justice mean in the context of youth advocacy?',
+    opts: ['Only adults having equal rights', 'Fair treatment and equal opportunities regardless of age', 'Young people ruling the government', 'Eliminating all age restrictions'],
+    ans: 1,
+    exp: 'Social justice in youth advocacy means ensuring fair treatment and equal opportunities — including the right to participate in civic life regardless of age.'
+  },
+  {
+    diff: 'medium',
+    category: '💪 Empowerment',
+    q: 'Which action best shows a young person practicing civic empowerment?',
+    opts: ['Staying silent in community meetings', 'Writing an evidence-based article about a local issue', 'Complaining on social media without solutions', 'Waiting for adults to solve problems'],
+    ans: 1,
+    exp: 'Writing evidence-based content about real issues demonstrates civic empowerment — combining voice with research and responsibility.'
+  },
+  // HARD
+  {
+    diff: 'hard',
+    category: '🔥 Advanced',
+    q: 'Which philosophical concept best describes treating youth dismissal as acceptable simply because it has "always been done that way"?',
+    opts: ['Utilitarianism', 'Appeal to tradition fallacy', 'Social contract theory', 'Relativism'],
+    ans: 1,
+    exp: 'The "appeal to tradition" fallacy means accepting something as correct because it\'s traditional. Youth dismissal has long been normalized this way — but tradition doesn\'t equal correctness.'
+  },
+  {
+    diff: 'hard',
+    category: '🏛️ Civic Theory',
+    q: 'In democratic theory, what concept directly supports the idea that youth should have voice in decisions that affect them?',
+    opts: ['Technocracy', 'Suffrage alone', 'Stakeholder participation principle', 'Meritocracy'],
+    ans: 2,
+    exp: 'The stakeholder participation principle holds that those who are affected by decisions have a legitimate right to participate in making them — this directly supports youth civic inclusion.'
+  },
+  {
+    diff: 'hard',
+    category: '🧩 Strategy',
+    q: 'Why is a dual-platform strategy (social media + long-form website) more effective than using a single platform for youth advocacy?',
+    opts: ['It costs more money', 'It reaches different audiences with both accessible and deep content simultaneously', 'Social media is more credible', 'Websites get more followers'],
+    ans: 1,
+    exp: 'Dual platforms maximize reach: social media captures attention and drives engagement, while the website provides depth and evidence — together they make the advocacy both accessible and credible.'
+  },
+  {
+    diff: 'hard',
+    category: '🌐 Global Context',
+    q: 'The UN Convention on the Rights of the Child (Article 12) states that children have the right to...',
+    opts: ['Vote in elections at age 12', 'Express their views freely in matters affecting them', 'Own property independently', 'Refuse schooling'],
+    ans: 1,
+    exp: 'Article 12 of the UNCRC guarantees children the right to express views freely on all matters affecting them — a foundational legal basis for youth advocacy worldwide.'
+  },
+  {
+    diff: 'hard',
+    category: '🔥 Advanced',
+    q: 'What rhetorical technique is being used when an adult says "I was young once too, and I didn\'t know enough to speak on these issues"?',
+    opts: ['Ethos building', 'Hasty generalization / false equivalence', 'Logical reasoning', 'Pathos appeal'],
+    ans: 1,
+    exp: 'This is a false equivalence — assuming their personal past experience applies universally to all youth. It\'s also a hasty generalization that ignores individual differences in knowledge and circumstance.'
+  },
+];
+
+// ══════════════════════════════════════
+// GAME STATE
+// ══════════════════════════════════════
+let difficulty = 'easy';
+let questions = [];
+let currentQ = 0;
+let score = 0;
+let correctCount = 0;
+let wrongCount = 0;
+let streak = 0;
+let bestStreak = 0;
+let timer = null;
+let timeLeft = 20;
+let timeMax = 20;
+let answered = false;
+let userAnswers = [];
+
+const diffSettings = {
+  easy:   { time: 20, label: '20 sec/question', count: 10 },
+  medium: { time: 15, label: '15 sec/question', count: 10 },
+  hard:   { time: 10, label: '10 sec/question', count: 10 },
+};
+
+function setDiff(btn, d) {
+  document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+  difficulty = d;
+  const s = diffSettings[d];
+  document.getElementById('time-label').textContent = s.label;
+  document.getElementById('q-count-label').textContent = s.count + ' Questions';
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function startGame() {
+  // Filter by difficulty (easy always has enough, for medium/hard mix)
+  let pool;
+  if (difficulty === 'easy') {
+    pool = allQuestions.filter(q => q.diff === 'easy');
+  } else if (difficulty === 'medium') {
+    pool = allQuestions.filter(q => q.diff === 'easy' || q.diff === 'medium');
+  } else {
+    pool = [...allQuestions];
+  }
+  questions = shuffle(pool).slice(0, 10);
+  currentQ = 0; score = 0; correctCount = 0; wrongCount = 0;
+  streak = 0; bestStreak = 0; userAnswers = [];
+  timeMax = diffSettings[difficulty].time;
+  document.getElementById('score-display').textContent = '0';
+  showScreen('quiz-screen');
+  renderQuestion();
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentQ];
+  const total = questions.length;
+
+  document.getElementById('q-num-label').textContent = `Question ${currentQ + 1} of ${total}`;
+  document.getElementById('progress-fill').style.width = `${((currentQ + 1) / total) * 100}%`;
+  document.getElementById('q-category').textContent = q.category;
+  document.getElementById('q-text').textContent = q.q;
+  document.getElementById('next-btn').style.display = 'none';
+  document.getElementById('feedback-box').className = 'feedback-box';
+
+  const grid = document.getElementById('options-grid');
+  grid.innerHTML = '';
+  const letters = ['A', 'B', 'C', 'D'];
+  q.opts.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.innerHTML = `<span class="option-letter">${letters[i]}</span><span>${opt}</span>`;
+    btn.onclick = () => selectAnswer(i, btn);
+    grid.appendChild(btn);
+  });
+
+  startTimer();
+}
+
+function startTimer() {
+  clearInterval(timer);
+  timeLeft = timeMax;
+  updateTimerUI();
+  timer = setInterval(() => {
+    timeLeft--;
+    updateTimerUI();
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      timeOut();
+    }
+  }, 1000);
+}
+
+function updateTimerUI() {
+  const num = document.getElementById('timer-num');
+  const circle = document.getElementById('timer-circle');
+  num.textContent = timeLeft;
+  const pct = (timeLeft / timeMax) * 360;
+  let color = timeLeft > timeMax * 0.5 ? '#5BAED6' : timeLeft > timeMax * 0.25 ? '#F9D77E' : '#E87EA1';
+  circle.style.background = `conic-gradient(${color} ${pct}deg, #F8F4FF ${pct}deg)`;
+}
+
+function timeOut() {
+  if (answered) return;
+  answered = true;
+  streak = 0;
+  wrongCount++;
+  userAnswers.push({ q: questions[currentQ], chosen: -1, correct: false });
+  const q = questions[currentQ];
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+  btns[q.ans].classList.add('reveal-correct');
+  showFeedback(false, "⏰ Time's up! " + q.exp);
+  document.getElementById('next-btn').style.display = 'inline-block';
+}
+
+function selectAnswer(idx, btn) {
+  if (answered) return;
+  answered = true;
+  clearInterval(timer);
+
+  const q = questions[currentQ];
+  const isCorrect = idx === q.ans;
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => b.disabled = true);
+
+  if (isCorrect) {
+    btn.classList.add('correct');
+    streak++;
+    correctCount++;
+    if (streak > bestStreak) bestStreak = streak;
+    const bonus = Math.ceil(timeLeft / timeMax * 50);
+    const pts = 100 + bonus;
+    score += pts;
+    document.getElementById('score-display').textContent = score;
+    showFeedback(true, `✅ Correct! +${pts} pts 🎉 ${q.exp}`);
+    if (streak >= 3) showStreak(streak);
+    userAnswers.push({ q, chosen: idx, correct: true });
+  } else {
+    btn.classList.add('wrong');
+    btns[q.ans].classList.add('reveal-correct');
+    streak = 0;
+    wrongCount++;
+    showFeedback(false, `❌ Not quite! ${q.exp}`);
+    userAnswers.push({ q, chosen: idx, correct: false });
+  }
+
+  document.getElementById('next-btn').style.display = 'inline-block';
+}
+
+function showFeedback(correct, text) {
+  const fb = document.getElementById('feedback-box');
+  fb.textContent = text;
+  fb.className = 'feedback-box ' + (correct ? 'correct-fb' : 'wrong-fb') + ' active';
+}
+
+function showStreak(n) {
+  const badge = document.getElementById('streak-badge');
+  const fires = ['','','','🔥','🔥🔥','🔥🔥🔥','⚡🔥⚡'];
+  document.getElementById('streak-fire').textContent = fires[Math.min(n, 6)] || '🔥';
+  document.getElementById('streak-text').textContent = `${n}x Streak!`;
+  badge.className = 'streak-badge show';
+  setTimeout(() => badge.className = 'streak-badge', 2500);
+}
+
+function nextQuestion() {
+  currentQ++;
+  if (currentQ >= questions.length) {
+    showResults();
+  } else {
+    showScreen('quiz-screen');
+    renderQuestion();
+  }
+}
+
+function showResults() {
+  showScreen('result-screen');
+
+  document.getElementById('final-score-big').textContent = score;
+  document.getElementById('final-score-total').textContent = 'points';
+  document.getElementById('r-correct').textContent = correctCount;
+  document.getElementById('r-wrong').textContent = wrongCount;
+  document.getElementById('r-streak').textContent = bestStreak;
+
+  const pct = correctCount / questions.length;
+  const ring = document.getElementById('score-ring');
+  const deg = pct * 360;
+  ring.style.background = `conic-gradient(#5BAED6 ${deg}deg, #F8F4FF ${deg}deg)`;
+
+  // Trophy & message
+  const trophies = ['😢','😅','🙂','😊','⭐','🌟','🏅','🥇','🏆','🎖️','🎊'];
+  const idx = Math.floor(pct * 10);
+  document.getElementById('result-trophy').textContent = trophies[Math.min(idx, 10)];
+
+  const titles = ['Keep Trying!','You Can Do It!','Getting There!','Not Bad!','Well Done!','Great Job!','Excellent!','Outstanding!','Amazing!','Perfect!','Legendary!'];
+  document.getElementById('result-title').textContent = titles[Math.min(idx, 10)] + (pct === 1 ? ' 🎉' : '');
+
+  const msgs = [
+    "Keep learning — your voice grows stronger with knowledge! 📚",
+    "Every expert was once a beginner. Keep speaking up! 💪",
+    "You're on your way! Your advocacy journey has begun. 🌱",
+    "Good effort! A few more reads and you'll ace it. ✨",
+    "You know your stuff! Keep amplifying youth voices. 📣",
+    "Impressive! You're clearly passionate about this cause. 🌸",
+    "Excellent knowledge! You'd be a great advocate. 🌟",
+    "Wow! Your understanding of youth rights is deep. ⭐",
+    "Amazing! You are truly Not Too Young To Speak! 🏆",
+    "Perfect score! You're a youth advocacy champion! 🎊",
+    "LEGENDARY! You ARE the voice of the youth! 🔥✨",
+  ];
+  document.getElementById('result-msg').textContent = msgs[Math.min(idx, 10)];
+
+  const quotes = [
+    { t: '"The youth of today are the leaders of tomorrow."', a: 'Nelson Mandela' },
+    { t: '"You are never too young to lead. You are never too young to change the world."', a: 'Not Too Young To Speak' },
+    { t: '"Raise your voice. Be heard. Your perspective matters."', a: 'Not Too Young To Speak' },
+    { t: '"Taking an interest in societal issues is an act of civic duty, not an act of defiance."', a: 'NTTYS Advocacy' },
+    { t: '"When given the chance, young people can lead, inspire, and create meaningful change."', a: 'Padigos, 2022' },
+  ];
+  const rq = quotes[Math.floor(Math.random() * quotes.length)];
+  document.getElementById('result-quote-text').textContent = rq.t;
+  document.querySelector('.result-quote-attr').textContent = '— ' + rq.a;
+
+  if (pct >= 0.7) launchConfetti();
+}
+
+function launchConfetti() {
+  const colors = ['#5BAED6','#E87EA1','#F9D77E','#7BC8A4','#C3A8D1','#FBBF8C'];
+  for (let i = 0; i < 60; i++) {
+    setTimeout(() => {
+      const c = document.createElement('div');
+      c.className = 'confetti-piece';
+      c.style.left = Math.random() * 100 + 'vw';
+      c.style.background = colors[Math.floor(Math.random() * colors.length)];
+      c.style.width = (Math.random() * 10 + 6) + 'px';
+      c.style.height = (Math.random() * 10 + 6) + 'px';
+      c.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+      c.style.animationDuration = (Math.random() * 2 + 2) + 's';
+      c.style.animationDelay = '0s';
+      document.body.appendChild(c);
+      setTimeout(() => c.remove(), 4000);
+    }, i * 40);
+  }
+}
+
+function openReview() {
+  const content = document.getElementById('review-content');
+  const letters = ['A', 'B', 'C', 'D'];
+  content.innerHTML = userAnswers.map((ua, i) => {
+    const chosen = ua.chosen === -1 ? 'No answer (time out)' : `${letters[ua.chosen]}: ${ua.q.opts[ua.chosen]}`;
+    const correct = `${letters[ua.q.ans]}: ${ua.q.opts[ua.q.ans]}`;
+    return `
+      <div class="review-item">
+        <div class="review-q">${i + 1}. ${ua.q.q}</div>
+        <div class="review-your ${ua.correct ? 'ok' : 'bad'}">
+          ${ua.correct ? '✅' : '❌'} Your answer: ${chosen}
+        </div>
+        ${!ua.correct ? `<div class="review-correct">✔️ Correct: ${correct}</div>` : ''}
+        <div class="review-explain">💡 ${ua.q.exp}</div>
+      </div>
+    `;
+  }).join('');
+  document.getElementById('modal-bg').className = 'modal-bg open';
+}
+
+function closeReview() { document.getElementById('modal-bg').className = 'modal-bg'; }
+
+function restartGame() { showScreen('start-screen'); }
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  // Force reflow for animation
+  const el = document.getElementById(id);
+  el.classList.remove('active');
+  void el.offsetWidth;
+  el.classList.add('active');
+}
+
+// ── FLOATING PARTICLES ──
+function createParticles() {
+  const container = document.getElementById('particles');
+  const colors = ['#5BAED6','#E87EA1','#F9D77E','#7BC8A4','#C3A8D1'];
+  const emojis = ['⭐','🌸','✦','💫','🌟'];
+  for (let i = 0; i < 18; i++) {
+    const p = document.createElement('div');
+    const isEmoji = Math.random() > 0.6;
+    if (isEmoji) {
+      p.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+      p.style.cssText = `
+        position: absolute;
+        left: ${Math.random() * 100}%;
+        font-size: ${Math.random() * 14 + 10}px;
+        animation: particleDrift ${Math.random() * 12 + 10}s ${Math.random() * -15}s linear infinite;
+        opacity: 0.4;
+      `;
+    } else {
+      p.className = 'particle';
+      p.style.cssText = `
+        left: ${Math.random() * 100}%;
+        width: ${Math.random() * 10 + 4}px;
+        height: ${Math.random() * 10 + 4}px;
+        background: ${colors[Math.floor(Math.random() * colors.length)]};
+        animation-duration: ${Math.random() * 12 + 10}s;
+        animation-delay: ${Math.random() * -15}s;
+      `;
+    }
+    container.appendChild(p);
+  }
+}
+
+createParticles();
+</script>
+</body>
+</html>
